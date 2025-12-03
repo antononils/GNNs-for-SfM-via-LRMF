@@ -95,7 +95,7 @@ def denormalize_M(norm_M, Ns, valid_points=None):
 
     # Zero-out invalid points (matching normalize_M behavior)
     if M_orig.is_cuda:
-        M_orig[~valid_points] = 0
+        M_orig[~valid_points.unsqueeze(1).expand(-1, 2, -1)] = 0
     else:
         invalid_idx = (~valid_points).nonzero(as_tuple=True)
         M_orig[invalid_idx[0], :, invalid_idx[1]] = 0
