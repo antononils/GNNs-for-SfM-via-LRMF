@@ -86,8 +86,8 @@ class InitModel(nn.Module):
         self.solver_iters = solver_iters
         self.device = device
         self.scene_type = scene_type
-        self.scene_scale = nn.Parameter(torch.tensor(0.1))  # or 0.01
         if scene_type == 'Euclidean':
+            self.scene_scale = nn.Parameter(torch.tensor(0.1))  # or 0.01
             # Input embedding/extraction layers
             self.embed_V = nn.Linear(7, dV)
             self.extract_V = nn.Linear(dV, 7)
