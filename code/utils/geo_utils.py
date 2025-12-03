@@ -150,3 +150,48 @@ def get_normalization_matrix(pts):
         norm_mat[1, 1] = s[1]
         norm_mat[0:2, 2] = -s * m
     return norm_mat
+
+
+def decompose_camera_matrix(Ps, Ks=None, inverse_direction_camera2global=True):
+    """
+    Given camera matrices Ps, first normalize with the inverse of a given calibration matrix (if not provided, assumes camera calibrated already).
+    Next extract R & t components from the P_norm = [R t]
+    Finally returns Rs=R.T as well as camera centers, determined by ts = -R.T @ t.
+    """
+    if isinstance(Ps, np.ndarray):
+        Rt = np.linalg.inv(Ks) @ Ps if Ks is not None else Ps
+        Rs = Rt[:, 0:3, 0:3]
+        ts = Rt[:, 0:3, 3]
+    else:
+        n_cams = Ps.shape[0]
+        if Ks is None:
+            Ks = torch.eye(3, device=Ps.device).expand((n_cams, 3, 3))
+
+        Rt = torch.bmm(Ks.inverse(), Ps)
+        Rs = Rt[:, 0:3, 0:3]
+        ts = Rt[:, 0:3, 3]
+
+    if inverse_direction_camera2global:
+        Rs, ts = invert_euclidean_trafo(Rs, ts)
+
+    return Rs, ts
+
+
+def invert_euclidean_trafo(Rs, ts):
+    """
+    Given a batch of Euclidean transformations, Rs and ts, such that X -> Rs[i]*X + ts[i],
+    return the corresponding Rs & ts for the inverse transformation, i.e. such that the above
+    formula with the new Rs and ts now maps in the opposite direction.
+    """
+    assert len(Rs.shape) == 3
+    assert Rs.shape[1] == 3
+    assert Rs.shape[2] == 3
+    assert len(ts.shape) == 2
+    assert ts.shape[1] == 3
+    if isinstance(Rs, np.ndarray):
+        Rs_inv = np.transpose(Rs, [0,2,1]) # Rs_inv = Rs.T
+        ts_inv = (-Rs_inv @ ts.reshape([-1, 3, 1])).squeeze() # ts_inv = -Rs.T @ ts = -Rs_inv @ ts
+    else:
+        Rs_inv = Rs.transpose(1, 2) # Rs_inv = Rs.T
+        ts_inv = torch.bmm(-Rs_inv, ts.unsqueeze(-1)).squeeze() # ts_inv = -Rs.T @ ts = -Rs_inv @ ts
+    return Rs_inv, ts_inv
