@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../../bundle_adjustment/ceres-solver/ceres-bin/lib/") # so
 
-import pyceres
+import PyCeres
 import numpy as np
 import scipy.io as sio
 import cv2
@@ -75,7 +75,7 @@ def run_euclidean_ceres(Xs, xs, Rs, ts, Ks, point_indices):
     Xsu = np.zeros_like(Xs_flat)
     Psu = np.zeros_like(Ps_for_c_flat)
 
-    pyceres.eucPythonFunctionOursBA(Xs_flat, xs_flat, Ps_for_c_flat, point_indices, Xsu, Psu, n_cam, n_pts, n_observe)
+    PyCeres.eucPythonFunctionOursBA(Xs_flat, xs_flat, Ps_for_c_flat, point_indices, Xsu, Psu, n_cam, n_pts, n_observe)
 
     new_Ps_for_c = Ps_for_c + Psu.reshape([n_cam, 12], order="C")
 
@@ -114,7 +114,7 @@ def run_projective_ceres(Ps, Xs, xs, point_indices):
     Psu = np.zeros_like(Ps_flat)
     Xsu = np.zeros_like(Xs_flat)
 
-    pyceres.pythonFunctionOursBA(Xs_flat, xs_flat, Ps_flat, point_idx_flat, Xsu, Psu, m, n, v)
+    PyCeres.pythonFunctionOursBA(Xs_flat, xs_flat, Ps_flat, point_idx_flat, Xsu, Psu, m, n, v)
     Psu = Psu.reshape([m,12], order="C")
     Psu = Psu.reshape([m,3,4], order="F")  #  [m, 12] Each camera is in *column* major as in matlab! the cpp code assumes it because the original code was in matlab
     Xsu = Xsu.reshape([n,3])
@@ -153,32 +153,32 @@ def run_euclidean_python_ceres(Xs, xs, Rs, ts, Ks, point_indices, print_out=True
     Xsu = np.zeros_like(Xs_flat)
     Psu = np.zeros_like(Ps_for_c_flat)
 
-    problem = pyceres.Problem()
+    problem = PyCeres.Problem()
     for i in range(n_observe):  # loop over the observations
         camIndex = int(point_indices[i])
         point3DIndex = int(point_indices[i + n_observe])
 
-        cost_function = pyceres.eucReprojectionError(xs_flat[2 * i], xs_flat[2 * i + 1],
+        cost_function = PyCeres.eucReprojectionError(xs_flat[2 * i], xs_flat[2 * i + 1],
                                                       Ps_for_c_flat[12 * camIndex:12 * (camIndex + 1)],
                                                       Xs_flat[3 * point3DIndex:3 * (point3DIndex + 1)])
 
-        loss_function = pyceres.HuberLoss(0.1)
+        loss_function = PyCeres.HuberLoss(0.1)
         problem.AddResidualBlock(cost_function, loss_function, Psu[12 * camIndex:12 * (camIndex + 1)],
                                  Xsu[3 * point3DIndex:3 * (point3DIndex + 1)])
 
-    options = pyceres.SolverOptions()
+    options = PyCeres.SolverOptions()
 
     options.function_tolerance = 0.0001
     options.max_num_iterations = 100
     options.num_threads = 24
 
-    options.linear_solver_type = pyceres.LinearSolverType.DENSE_SCHUR
+    options.linear_solver_type = PyCeres.LinearSolverType.DENSE_SCHUR
     options.minimizer_progress_to_stdout = True
     if not print_out:
-        pyceres.LoggingType = pyceres.LoggingType.SILENT
+        PyCeres.LoggingType = PyCeres.LoggingType.SILENT
 
-    summary = pyceres.Summary()
-    pyceres.Solve(options, problem, summary)
+    summary = PyCeres.Summary()
+    PyCeres.Solve(options, problem, summary)
     converged = summary.IsSolutionUsable()
     if print_out or not converged:
         print(summary.FullReport())
@@ -225,30 +225,30 @@ def run_projective_python_ceres(Ps, Xs, xs, point_indices, print_out=True):
     Psu = np.zeros_like(Ps_flat)
     Xsu = np.zeros_like(Xs_flat)
 
-    problem = pyceres.Problem()
+    problem = PyCeres.Problem()
     for i in range(v):  # loop over the observations
         camIndex = int(point_idx_flat[i])
         point3DIndex = int(point_idx_flat[i + v])
 
-        cost_function = pyceres.projReprojectionError(xs_flat[2*i], xs_flat[2*i + 1], Ps_flat[12*camIndex:12*(camIndex+1)], Xs_flat[3 *point3DIndex:3*(point3DIndex+1)])
+        cost_function = PyCeres.projReprojectionError(xs_flat[2*i], xs_flat[2*i + 1], Ps_flat[12*camIndex:12*(camIndex+1)], Xs_flat[3 *point3DIndex:3*(point3DIndex+1)])
 
-        loss_function = pyceres.HuberLoss(0.1)
+        loss_function = PyCeres.HuberLoss(0.1)
         problem.AddResidualBlock(cost_function, loss_function, Psu[12*camIndex:12*(camIndex+1)], Xsu[3 *point3DIndex:3*(point3DIndex+1)])
 
 
-    options = pyceres.SolverOptions()
+    options = PyCeres.SolverOptions()
 
     options.function_tolerance = 0.0001
     options.max_num_iterations = 100
     options.num_threads = 24
 
-    options.linear_solver_type = pyceres.LinearSolverType.DENSE_SCHUR
+    options.linear_solver_type = PyCeres.LinearSolverType.DENSE_SCHUR
     options.minimizer_progress_to_stdout = True
     if not print_out:
-        pyceres.LoggingType = pyceres.LoggingType.SILENT
+        PyCeres.LoggingType = PyCeres.LoggingType.SILENT
 
-    summary = pyceres.Summary()
-    pyceres.Solve(options, problem, summary)
+    summary = PyCeres.Summary()
+    PyCeres.Solve(options, problem, summary)
     converged = summary.IsSolutionUsable()
     if print_out or not converged:
         print(summary.FullReport())
