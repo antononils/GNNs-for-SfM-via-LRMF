@@ -32,5 +32,3 @@ def plotly_3d_points(X_final, save_path=None):
             fig.write_html(save_path)
         else:
             fig.write_image(save_path)
-
-    fig.show()

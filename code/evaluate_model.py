@@ -37,8 +37,7 @@ if __name__ == '__main__':
             results = euc_ba(M, R, t, np.linalg.inv(N), X, None, N)
         else:
             raise ValueError(f"Unknown scene type: {scene_type}")
-        
-        #results = proj_ba(P, M, X, N)
+
         print(f"Results before: {results['repro_before']}")
         print(f"Results after: {results['repro_after']}")
 
