@@ -18,7 +18,7 @@ def init_cam_V(n_views, device):
 def train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, loss_fn,
                 epochs, train_Ns_list, train_M_gt_list, val_Ns_list, val_M_gt_list, scene_type='Projective', device='cpu', warmup_epochs=5,
                 max_grad_norm=1.0, solver_type = 'ceres', solver_iters_schedule=(0,1,2),
-                save_path='outputs/best_model.pth'):
+                save_path='../../pretrained_models/best_model.pth'):
 
     best_px_error = float('inf')  # initialize best validation metric
     model.train()
