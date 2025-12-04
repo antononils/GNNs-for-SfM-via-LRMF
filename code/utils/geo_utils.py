@@ -195,3 +195,6 @@ def invert_euclidean_trafo(Rs, ts):
         Rs_inv = Rs.transpose(1, 2) # Rs_inv = Rs.T
         ts_inv = torch.bmm(-Rs_inv, ts.unsqueeze(-1)).squeeze() # ts_inv = -Rs.T @ ts = -Rs_inv @ ts
     return Rs_inv, ts_inv
+
+def get_positive_projected_pts_mask(pts2D, infinity_pts_margin):
+    return pts2D[:, :, 2] >= infinity_pts_margin

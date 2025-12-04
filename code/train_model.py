@@ -20,8 +20,9 @@ if __name__ == '__main__':
     # dataset path (same as before)
     training_scenes = ["EcoleSuperiorDeGuerre", "DoorLund", "ParkGateClermontFerrand", "ThianHookKengTempleSingapore", "StatueOfLiberty", "KingsCollegeUniversityOfToronto", "SriThendayuthapaniSingapore", "SkansenKronanGothenburg", "BuddahToothRelicTempleSingapore", "Eglisedudome", "FortChanningGateSingapore", "GustavVasa"]
     validation_scenes = ["GoldenStatueSomewhereInHongKong", "EastIndiamanGoteborg", "PantheonParis"]
+    
     scene_type = 'Euclidean'
-    train_dataloader, train_Ns_list, train_M_gt_list = create_dataloader(training_scenes, scene_type, max_points=20000,batch_size=1, shuffle=False, outlier_threshold=None, device=device)
+    train_dataloader, train_Ns_list, train_M_gt_list = create_dataloader(training_scenes, scene_type, max_points=25000,batch_size=1, shuffle=False, outlier_threshold=None, device=device)
     val_dataloader, val_Ns_list, val_M_gt_list = create_dataloader(validation_scenes, scene_type, max_points=None, batch_size=1, shuffle=False, outlier_threshold=None, device=device)
 
     model = InitModel(dV=1024, dS=64, n_factormers=2, scene_type=scene_type, solver_iters=model_solver_default, device=device).to(device)
@@ -31,7 +32,8 @@ if __name__ == '__main__':
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10)
 
     loss_fn = ReconLossStable(gamma=0.8, eps=1e-1, depth_penalty_w=1.0, huber_delta=0.5)
-    
-    train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, loss_fn,
+    loss_ESFM = ESFMLoss()
+
+    train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, loss_ESFM,
                 epochs,train_Ns_list, train_M_gt_list, val_Ns_list, val_M_gt_list, scene_type=scene_type, device=device, warmup_epochs=warmup_epochs,
                 max_grad_norm=max_grad_norm, solver_type = 'ceres', solver_iters_schedule=solver_iters_schedule)

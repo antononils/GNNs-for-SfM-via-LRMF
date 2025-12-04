@@ -5,7 +5,7 @@ from utils.dataset_utils import denormalize_M
 def init_cam_V(n_views, device):
     # quaternion = (w,x,y,z) with w ~ 1, small xyz noise
     eps = 1e-3
-    q = torch.randn(n_views, 4, device=device) * 1e-3
+    q = torch.randn(n_views, 4, device=device) * 1e-2
     q[:, 0] += 1.0    # bias real part toward 1.0 (identity)
     q = q / q.norm(dim=-1, keepdim=True).clamp(min=1e-8)
     t = torch.randn(n_views, 3, device=device) * 0.1  # small translation scale tuned to your scene
@@ -68,7 +68,7 @@ def train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, l
                 # Extract data
                 m, n = data.m, data.n
                 edge_index, edge_attr = data.edge_index.to(device), data.edge_attr.to(device)
-                if scene_type == 'Eucldiean':
+                if scene_type == 'Euclidean':
                     V0, S0 = init_cam_V(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
                 elif scene_type == 'Projective':
                     V0, S0 = torch.empty(m, 12).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
