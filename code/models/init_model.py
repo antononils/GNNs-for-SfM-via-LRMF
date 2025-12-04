@@ -3,7 +3,7 @@ from network_functions.ba_solver import admm_ba, ceres_ba
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch3d import transforms as py3dtransf
+
 
 def project_to_rot(m):
     u, s, v = torch.svd(m)
@@ -13,9 +13,51 @@ def project_to_rot(m):
     vt = torch.cat((vt[:, :2, :], vt[:, -1:, :] * det), 1)
     return torch.matmul(u, vt)
 
+def quaternion_to_matrix(q: torch.Tensor) -> torch.Tensor:
+    """Convert unit quaternions to rotation matrices.
+
+    q: (..., 4) with real part first.
+    returns: (..., 3, 3)
+    """
+    # normalize to be safe
+    q = q / q.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+    w, x, y, z = q.unbind(-1)
+
+    ww = w * w
+    xx = x * x
+    yy = y * y
+    zz = z * z
+    wx = w * x
+    wy = w * y
+    wz = w * z
+    xy = x * y
+    xz = x * z
+    yz = y * z
+
+    m00 = 1 - 2 * (yy + zz)
+    m01 = 2 * (xy - wz)
+    m02 = 2 * (xz + wy)
+
+    m10 = 2 * (xy + wz)
+    m11 = 1 - 2 * (xx + zz)
+    m12 = 2 * (yz - wx)
+
+    m20 = 2 * (xz - wy)
+    m21 = 2 * (yz + wx)
+    m22 = 1 - 2 * (xx + yy)
+
+    mat = torch.stack(
+        (m00, m01, m02,
+         m10, m11, m12,
+         m20, m21, m22),
+        dim=-1,
+    )
+    return mat.view(q.shape[:-1] + (3, 3))
+
+
 def extract_view_outputs(x):
     # Get calibrated predictions
-    RTs = py3dtransf.quaternion_to_matrix(x[:, :4])
+    RTs = quaternion_to_matrix(x[:, :4])
 
     # Get translation
     minRTts = x[:, -3:]
