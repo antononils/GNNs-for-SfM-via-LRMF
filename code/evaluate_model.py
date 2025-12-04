@@ -1,13 +1,11 @@
 import torch
-from network_functions.evaluation import evaluate_model, compute_pixel_error
+from network_functions.evaluation import evaluate_model
 from datasets.SceneData import *
 from models.init_model import *
-from torch_geometric.loader import DataLoader
 from utils.plot_utils import *
 from utils.dataset_utils import *
 from utils.ba_functions import *
 from utils.geo_utils import *
-from network_functions.ba_solver import ceres_ba, admm_ba
 from network_functions.load_data import create_dataloader
 
 
