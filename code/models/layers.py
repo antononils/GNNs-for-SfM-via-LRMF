@@ -38,7 +38,7 @@ class FactormerLayer(nn.Module):
     - drop_path: stochastic depth probability to apply to the residual branch
     """
 
-    def __init__(self, d, num_heads=4, attn_dropout=0.1, dropout=0.1, edge_dim=None,
+    def __init__(self, d, num_heads=4, attn_dropout=0.0, dropout=0.0, edge_dim=None,
                  use_edge_update=True, drop_path=0.0, ff_mult=4, use_gated_ffn=True):
         super().__init__()
         assert d % num_heads == 0, "d must be divisible by num_heads"

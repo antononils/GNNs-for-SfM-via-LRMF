@@ -108,8 +108,8 @@ class InitModel(nn.Module):
 
         # Factormers: VS uses dV internal dimension
         fk_kwargs = {} if factormer_kwargs is None else factormer_kwargs
-        self.factormer_VS = FactormerLayer(d=dV, edge_dim=edge_dim, **fk_kwargs, use_edge_update=False)
-        self.factormer_SV = FactormerLayer(d=dS, edge_dim=edge_dim, **fk_kwargs, use_edge_update=False)
+        self.factormer_VS = FactormerLayer(d=dV, edge_dim=edge_dim, **fk_kwargs, use_edge_update=True)
+        self.factormer_SV = FactormerLayer(d=dS, edge_dim=edge_dim, **fk_kwargs, use_edge_update=True)
 
         # Weight initialization
         self.apply(_init_weights_xavier)
