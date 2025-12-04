@@ -13,13 +13,15 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
 
-    scene_names = ["Dome", "SkansenKronan", "SomeCathedralInBarcelona"]
-    scene_type = 'Projective'
-    
+    scene_names = ["AlcatrazCourtyard", "AlcatrazWaterTower", "DrinkingFountainSomewhereInZurich",
+                   "NijoCastleGate", "PortaSanDonatoBologna", "RoundChurchCambridge", "SmolnyCathedralStPetersburg",
+                   "SomeCathedralInBarcelona", "SriVeeramakaliammanSingapore", "YuehHaiChingTempleSingapore"]
+    scene_type = 'Euclidean'
+
     dataloader, Ns, Ms = create_dataloader(scene_names,scene_type=scene_type,max_points=None, batch_size=1, shuffle=False, outlier_threshold=None, device=device)
-    
-    model = InitModel(dV=1024, dS=64, n_factormers=2, solver_iters=0, device=device).to(device)
-    px_errors, Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/proj_model.pth', model, scene_type=scene_type, device=device)
+
+    model = InitModel(dV=1024, dS=64, n_factormers=2, scene_type=scene_type, solver_iters=0, device=device).to(device)
+    px_errors, Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/euc_model.pth', model, scene_type=scene_type, device=device)
 
     i = 0
     for P, X, M, N, O in zip(Ps, Xs, Ms, Ns, Os):
