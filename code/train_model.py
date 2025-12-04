@@ -14,7 +14,7 @@ if __name__ == '__main__':
     warmup_epochs = 100          # train GNN alone for these many epochs
     solver_iters_schedule = [1,2,3]  # after warmup, ramp to these many ALS iters (index 0 = first epoch after warmup)
     model_solver_default = 3       # default internal value (unused because we use override scheduling)
-    lr = 1e-5                   # small lr stabilizes training
+    lr = 3e-5                   # small lr stabilizes training
     max_grad_norm = 1.0
 
     # dataset path (same as before)
