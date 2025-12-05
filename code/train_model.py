@@ -10,8 +10,8 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
     # Hyperparameters you can tweak
-    epochs = 100
-    warmup_epochs = 100          # train GNN alone for these many epochs
+    epochs = 1000
+    warmup_epochs = 1000          # train GNN alone for these many epochs
     solver_iters_schedule = [1,2,3]  # after warmup, ramp to these many ALS iters (index 0 = first epoch after warmup)
     model_solver_default = 3       # default internal value (unused because we use override scheduling)
     lr = 3e-5                   # small lr stabilizes training
@@ -33,10 +33,7 @@ if __name__ == '__main__':
     loss_fn = ReconLossStable(gamma=0.8, eps=1e-1, depth_penalty_w=1.0, huber_delta=0.5)
     loss_ESFM = ESFMLoss(0.1)
 
-    ckpt = torch.load('../../pretrained_models/euc_model.pth', map_location=device)
-    model.load_state_dict(ckpt['model_state_dict'])
-
-    train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, loss_ESFM,
+    train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, loss_fn,
                 epochs,train_Ns_list, train_M_gt_list, val_Ns_list, val_M_gt_list, scene_type=scene_type, device=device, warmup_epochs=warmup_epochs,
                 max_grad_norm=max_grad_norm, solver_type = 'ceres', solver_iters_schedule=solver_iters_schedule)
     
