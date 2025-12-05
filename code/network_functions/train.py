@@ -37,7 +37,12 @@ def train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, l
             # Extract data
             m, n = data.m, data.n
             edge_index, edge_attr = data.edge_index.to(device), data.edge_attr.to(device)
-            V0, S0 = init_cam_V(m, device), torch.empty(n, 3).uniform_(0,1).to(device)
+            if scene_type == 'Euclidean':
+                V0, S0 = init_cam_V(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
+            elif scene_type == 'Projective':
+                V0, S0 = torch.empty(m, 12).uniform_(0.1).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
+            else:
+                raise ValueError(f"Unknown scene type: {scene_type}")
             M = data.x.to(device)
             obs_matrix = data.obs_matrix.to(device)
             
@@ -71,7 +76,7 @@ def train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, l
                 if scene_type == 'Euclidean':
                     V0, S0 = init_cam_V(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
                 elif scene_type == 'Projective':
-                    V0, S0 = torch.empty(m, 12).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
+                    V0, S0 = torch.empty(m, 12).uniform_(0.1).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
                 else:
                     raise ValueError(f"Unknown scene type: {scene_type}")
                 M = data.x.to(device)

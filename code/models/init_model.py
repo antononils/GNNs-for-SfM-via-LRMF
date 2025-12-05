@@ -167,10 +167,14 @@ class InitModel(nn.Module):
         solver_iters = self.solver_iters if solver_iters_override is None else solver_iters_override
 
         # Optional: run ADMM bundle adjustment
-        if solver_type == 'ceres':
-            P_seq, X_seq = ceres_ba(P_out,X,M, obs_matrix, solver_iters, True)
-        elif solver_type == 'admm':
-            P_seq, X_seq = admm_ba(P_out,X, M, obs_matrix, 1, solver_iters, 1, 1, 1e-2, True)
+        if solver_iters > 0:
+            if solver_type == 'ceres':
+                P_seq, X_seq = ceres_ba(P_out,X,M, obs_matrix, solver_iters, True)
+            elif solver_type == 'admm':
+                P_seq, X_seq = admm_ba(P_out,X, M, obs_matrix, 1, solver_iters, 1, 1, 1e-2, True)
+            else:
+                raise ValueError(f'Unknown solver type {solver_type}')
         else:
-            raise ValueError(f'Unknown solver type {solver_type}')
+            P_seq = [P_out]
+            X_seq = [X]
         return P_seq, X_seq
