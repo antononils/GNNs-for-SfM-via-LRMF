@@ -16,14 +16,16 @@ if __name__ == '__main__':
     scene_names = ["AlcatrazCourtyard", "AlcatrazWaterTower", "DrinkingFountainSomewhereInZurich",
                    "NijoCastleGate", "PortaSanDonatoBologna", "RoundChurchCambridge", "SmolnyCathedralStPetersburg",
                    "SomeCathedralInBarcelona", "SriVeeramakaliammanSingapore", "YuehHaiChingTempleSingapore"]
+
+    #scene_names = ["SomeCathedralInBarcelona"]
     scene_type = 'Euclidean'
 
     dataloader, Ns, Ms = create_dataloader(scene_names,scene_type=scene_type,max_points=None, batch_size=1, shuffle=False, outlier_threshold=None, device=device)
 
     model = InitModel(dV=1024, dS=64, n_factormers=2, scene_type=scene_type, solver_iters=0, device=device).to(device)
-    px_errors, Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/euc_model.pth', model, scene_type=scene_type, device=device)
+    px_errors, Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/best_model.pth', model, scene_type=scene_type, device=device)
 
-    i = 0
+    i = 50
     for P, X, M, N, O in zip(Ps, Xs, Ms, Ns, Os):
         if scene_type == 'Projective':
             P = torch.linalg.inv(N) @ P
