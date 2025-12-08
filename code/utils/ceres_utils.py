@@ -169,7 +169,7 @@ def run_euclidean_python_ceres(Xs, xs, Rs, ts, Ks, point_indices, print_out=True
     options = PyCeres.SolverOptions()
 
     options.function_tolerance = 0.0001
-    options.max_num_iterations = 200
+    options.max_num_iterations = 100
     options.num_threads = 24
 
     options.linear_solver_type = PyCeres.LinearSolverType.DENSE_SCHUR

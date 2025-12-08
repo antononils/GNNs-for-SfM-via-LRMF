@@ -59,22 +59,6 @@ def euc_ba(xs, Rs, ts, Ks, Xs_our=None, Ps=None, Ns=None, repeat=True, triangula
         # second ba with triangulated x
         new_Rs, new_ts, new_Ps, new_Xs, converged = ceres_utils.run_euclidean_python_ceres(new_Xs, visible_xs, new_Rs, new_ts, Ks, point_indices, print_out=print_out)
         results['converged2'] = converged
-    
-    if repeat:
-        if return_repro:
-            results['repro_middle2'] = np.nanmean(geo_utils.reprojection_error_with_points(new_Ps, new_Xs, xs, visible_points))
-
-        # Normalize the refined cameras (and again, redundantly, the 2D points).
-        norm_P, norm_x = geo_utils.normalize_points_cams(new_Ps, xs, Ns)
-        # Replace the refined 3D structure solution with another DLT triangulation.
-        new_Xs = geo_utils.dlt_triangulation(norm_P, norm_x, visible_points)
-
-        if return_repro:
-            results['repro_middle2_triangulated'] = np.nanmean(geo_utils.reprojection_error_with_points(new_Ps, new_Xs, xs, visible_points))
-
-        # second ba with triangulated x
-        new_Rs, new_ts, new_Ps, new_Xs, converged = ceres_utils.run_euclidean_python_ceres(new_Xs, visible_xs, new_Rs, new_ts, Ks, point_indices, print_out=print_out)
-        results['converged3'] = converged
 
     if return_repro:
         results['repro_after'] = np.nanmean(geo_utils.reprojection_error_with_points(new_Ps, new_Xs, xs, visible_points))
