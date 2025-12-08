@@ -1,56 +1,68 @@
-import torch
-from network_functions.evaluation import evaluate_model
+import torch, os, numpy as np
+from utils.dataset_utils import *
+from utils.geo_utils import *
+from utils.ba_functions import *
+from utils.plot_utils import *
 from datasets.SceneData import *
 from models.init_model import *
-from utils.plot_utils import *
-from utils.dataset_utils import *
-from utils.ba_functions import *
-from utils.geo_utils import *
 from network_functions.load_data import create_dataloader
+from network_functions.evaluation import evaluate_model
 
 
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(device)
+    print('Using device:', device)
 
+    scene_type = 'Euclidean'
     scene_names = ["AlcatrazCourtyard", "AlcatrazWaterTower", "DrinkingFountainSomewhereInZurich",
                    "NijoCastleGate", "PortaSanDonatoBologna", "RoundChurchCambridge", "SmolnyCathedralStPetersburg",
                    "SomeCathedralInBarcelona", "SriVeeramakaliammanSingapore", "YuehHaiChingTempleSingapore"]
 
-    #scene_names = ["SomeCathedralInBarcelona"]
-    scene_type = 'Euclidean'
-
     dataloader, Ns, Ms = create_dataloader(scene_names,scene_type=scene_type,max_points=None, batch_size=1, shuffle=False, outlier_threshold=None, device=device)
-
     model = InitModel(dV=1024, dS=64, n_factormers=2, scene_type=scene_type, solver_iters=0, device=device).to(device)
-    px_errors, Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/best_model.pth', model, scene_type=scene_type, device=device)
+    _, Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/best_model.pth', model, scene_type=scene_type, device=device)
+    
+    out_dir = "outputs"
+    os.makedirs(out_dir, exist_ok=True)
 
-    i = 50
-    for P, X, M, N, O in zip(Ps, Xs, Ms, Ns, Os):
+    for idx, (P, X, M, N, O) in enumerate(zip(Ps, Xs, Ms, Ns, Os)):
+        scene_name = scene_names[idx]
+
         if scene_type == 'Projective':
             P = torch.linalg.inv(N) @ P
             M = denormalize_M(M, N, O)
             P, X, M, N, O = P.cpu().numpy(), X.cpu().numpy(), M.cpu().numpy(), N.cpu().numpy(), O.cpu().numpy()
             results = proj_ba(P, M, X, N)
+        
         elif scene_type == 'Euclidean':
             M = denormalize_M(M, N, O)
             P, X, M, N, O = P.cpu().numpy(), X.cpu().numpy(), M.cpu().numpy(), N.cpu().numpy(), O.cpu().numpy()
             R, t = decompose_camera_matrix(P, inverse_direction_camera2global=True)
             results = euc_ba(M, R, t, np.linalg.inv(N), X, None, N)
+        
         else:
             raise ValueError(f"Unknown scene type: {scene_type}")
 
-        print(f"Results before: {results['repro_before']}")
-        print(f"Results after: {results['repro_after']}")
+        print(f"[{scene_name}] Results before: {results['repro_before']}")
+        print(f"[{scene_name}] Results after:  {results['repro_after']}")
 
-        P = results['Ps']
-        X = results['Xs']
-        P, X, M, N, O = torch.as_tensor(P, dtype=torch.double), torch.as_tensor(X, dtype=torch.double), torch.as_tensor(M, dtype=torch.double), torch.as_tensor(N, dtype=torch.double), torch.as_tensor(O, dtype=torch.bool)
+        # Extract BA results
+        Rs_ba = results.get("Rs", None)
+        ts_ba = results.get("ts", None)
+        Ps_ba = results.get("Ps", None)
+        Xs_ba = results.get("Xs", None)
 
-        lower, upper = X.quantile(0.01), X.quantile(0.99)
-        mask = ((X >= lower) & (X <= upper)).all(axis=1)
-        X = X[mask]
+        # Save NPZ
+        npz_path = os.path.join(out_dir, f"{scene_name}.npz")
+        np.savez(npz_path, Rs=Rs_ba, ts=ts_ba, Ps=Ps_ba, Xs=Xs_ba)
 
-        save_path = f'outputs/point_cloud_{i}.html'
-        plotly_3d_points(X, save_path=save_path)
-        i += 1
+        # Plot point cloud
+        X_ref = results["Xs"]
+        X_ref = torch.as_tensor(X_ref, dtype=torch.double)
+
+        lower, upper = X_ref.quantile(0.01), X_ref.quantile(0.99)
+        mask = ((X_ref >= lower) & (X_ref <= upper)).all(axis=1)
+        X_ref = X_ref[mask]
+
+        plot_path = os.path.join(out_dir, f"{scene_name}.html")
+        plotly_3d_points(X_ref, save_path=plot_path)
