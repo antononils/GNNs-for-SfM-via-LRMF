@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import dask.array as da
 from utils.general_utils import nonzero_safe
+import cvxpy as cp
 
 def xs_valid_points(xs):
     """
@@ -198,3 +199,77 @@ def invert_euclidean_trafo(Rs, ts):
 
 def get_positive_projected_pts_mask(pts2D, infinity_pts_margin):
     return pts2D[:, :, 2] >= infinity_pts_margin
+
+def align_cameras(pred_Rs, gt_Rs, pred_ts, gt_ts, return_alignment=False):
+    # NOTE! All "t" vectors are in fact camera centers, C = -R^T * t.
+    '''
+
+    :param pred_Rs: torch double - n x 3 x 3 predicted camera rotation
+    :param gt_Rs: torch double - n x 3 x 3 camera ground truth rotation
+    :param pred_ts: torch double - n x 3 predicted translation
+    :param gt_ts: torch double - n x 3 ground truth translation
+    :return:
+    '''
+    # find rotation
+    d = 3
+    n = pred_Rs.shape[0]
+
+    pred_Rs_orig = pred_Rs.copy()
+    pred_ts_orig = pred_ts.copy()
+
+    # Find "average" relative rotation between GT & pred (not necessarily itself a rotation):
+    Q = np.sum(gt_Rs @ np.transpose(pred_Rs, [0,2,1]), axis=0) #sum over the n views of R_gt[i] @ R_pred[i].T
+    try:
+        Uq, _, Vqh = np.linalg.svd(Q)
+    except np.linalg.LinAlgError as e:
+        print('[WARNING] Camera alignment failed at SVD. Simply return predicted poses as-is.')
+        print(repr(e))
+        if return_alignment:
+            similarity_mat = np.eye(4)
+            return pred_Rs_orig, pred_ts_orig, similarity_mat
+        else:
+            return pred_Rs_orig, pred_ts_orig
+
+    # Normalize singular values to acquire an orthogonal matrix:
+    sv = np.ones(3)
+    # Finally, apply sign-flip on final singular value, such that we acquire a rotation (with determinant 1):
+    sv[-1] = np.linalg.det(Uq @ Vqh)
+    R_opt = Uq @ np.diag(sv) @ Vqh
+
+    R_fixed = R_opt.reshape([1,3,3]) @ pred_Rs
+
+    # find translation
+    pred_ts = pred_ts @ R_opt.T  # Apply the optimal rotation on all the translations
+    c_opt = cp.Variable()
+    t_opt = cp.Variable((1, d))
+
+    # Find optimal relative translation (t_opt), as well as a scale correction (c_opt) by solving an optimization problem numerically.
+    # The cost function appears to be the sum of normed residuals of the "t" vectors (which are in fact (somewhat misleading) the camera centers, and thus all in the same coordinate system).
+    # The norm is defined by cvxpy.norm, and is probably Euclidean.
+    # If it were squared, we would simply have an unconstrained QP, which should alternatively be possible to solve analytically.
+    constraints = []
+    obj = cp.Minimize(
+        cp.sum(cp.norm(gt_ts - (c_opt * pred_ts + np.ones((n, 1), dtype=np.double) @ t_opt), axis=1)))
+    # obj = cp.Minimize(cp.sum(cp.norm(gt_ts.numpy() - (c_opt * pred_ts.numpy() + t_opt_rep), axis=1)))
+    prob = cp.Problem(obj, constraints)
+    try:
+        prob.solve()
+        if not prob.status == "optimal":
+            raise cp.error.SolverError("Status: \"{}\" encountered during alignment between predicted & GT cameras".format(prob.status))
+    except cp.error.SolverError as e:
+        print('[WARNING] Camera alignment failed at optimization. Simply return predicted poses as-is.')
+        print(repr(e))
+        if return_alignment:
+            similarity_mat = np.eye(4)
+            return pred_Rs_orig, pred_ts_orig, similarity_mat
+        else:
+            return pred_Rs_orig, pred_ts_orig
+    t_fixed = c_opt.value * pred_ts + t_opt.value.reshape([1,3])
+
+    if return_alignment:
+        similarity_mat = np.eye(4)
+        similarity_mat[0:3, 0:3] = c_opt.value * R_opt
+        similarity_mat[0:3, 3] = t_opt.value
+        return R_fixed, t_fixed, similarity_mat
+    else:
+        return R_fixed, t_fixed
