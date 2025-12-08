@@ -1,4 +1,4 @@
-import torch, os, numpy as np
+import torch, os, numpy as np, pandas as pd
 from utils.dataset_utils import *
 from utils.geo_utils import *
 from utils.ba_functions import *
@@ -24,6 +24,7 @@ if __name__ == '__main__':
     
     out_dir = "outputs"
     os.makedirs(out_dir, exist_ok=True)
+    repro_stats = [] 
 
     for idx, (P, X, M, N, O) in enumerate(zip(Ps, Xs, Ms, Ns, Os)):
         scene_name = scene_names[idx]
@@ -46,6 +47,12 @@ if __name__ == '__main__':
         print(f"[{scene_name}] Results before: {results['repro_before']}")
         print(f"[{scene_name}] Results after:  {results['repro_after']}")
 
+        repro_stats.append({
+            "scene": scene_name,
+            "repro_before": float(results.get("repro_before", np.nan)),
+            "repro_after": float(results.get("repro_after", np.nan))
+        })
+
         # Extract BA results
         Rs_ba = results.get("Rs", None)
         ts_ba = results.get("ts", None)
@@ -66,3 +73,7 @@ if __name__ == '__main__':
 
         plot_path = os.path.join(out_dir, f"{scene_name}.html")
         plotly_3d_points(X_ref, save_path=plot_path)
+    
+    df = pd.DataFrame(repro_stats)
+    excel_path = os.path.join(out_dir, "reprojection_stats.xlsx")
+    df.to_excel(excel_path, index=False)
