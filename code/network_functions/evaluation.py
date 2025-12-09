@@ -72,7 +72,8 @@ def evaluate_model(dataloader,Ns_list,Ms_gt,solver_type,model_path,model,scene_t
 #            P_final = P_seq[-1]
 #            X_final = X_seq[-1]
 
-            P_final = extract_view_outputs(V0)
+#            P_final = extract_view_outputs(V0)
+            P_final = V0.view(-1, 3, 4)
             X_final = S0
 
             P_finals.append(P_final)
