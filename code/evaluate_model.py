@@ -13,18 +13,21 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Using device:', device)
 
-    scene_type = 'Euclidean'
-    scene_names = ["AlcatrazCourtyard", "AlcatrazWaterTower", "DrinkingFountainSomewhereInZurich",
-                   "NijoCastleGate", "PortaSanDonatoBologna", "RoundChurchCambridge", "SmolnyCathedralStPetersburg",
-                   "SomeCathedralInBarcelona", "SriVeeramakaliammanSingapore", "YuehHaiChingTempleSingapore"]
+    scene_type = 'Projective'
+    #scene_names = ["AlcatrazCourtyard", "AlcatrazWaterTower", "DrinkingFountainSomewhereInZurich",
+    #               "NijoCastleGate", "PortaSanDonatoBologna", "RoundChurchCambridge", "SmolnyCathedralStPetersburg",
+    #               "SomeCathedralInBarcelona", "SriVeeramakaliammanSingapore", "YuehHaiChingTempleSingapore"]
+
+    scene_names = ["AlcatrazWaterTower", "Dino319", "Dino4983", "DrinkingFountain", "Dome", "GustavVasa", "Nijo", 
+                   "SkansenKronan", "SomeCathedralInBarcelona", "SriVeeramakaliammanSingapore"]
 
     dataloader, Ns, Ms = create_dataloader(scene_names,scene_type=scene_type,max_points=None, batch_size=1, shuffle=False, outlier_threshold=None, device=device)
     model = InitModel(dV=1024, dS=64, n_factormers=2, scene_type=scene_type, solver_iters=0, device=device).to(device)
-    _, Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/best_euc_model.pth', model, scene_type=scene_type, device=device)
-    
-    out_dir = "outputs"
+    _, Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/proj_model.pth', model, scene_type=scene_type, device=device)
+
+    out_dir = "outputs_proj"
     os.makedirs(out_dir, exist_ok=True)
-    repro_stats = [] 
+    repro_stats = []
 
     for idx, (P, X, M, N, O) in enumerate(zip(Ps, Xs, Ms, Ns, Os)):
         scene_name = scene_names[idx]
@@ -54,25 +57,25 @@ if __name__ == '__main__':
         })
 
         # Extract BA results
-        Rs_ba = results.get("Rs", None)
-        ts_ba = results.get("ts", None)
-        Ps_ba = results.get("Ps", None)
-        Xs_ba = results.get("Xs", None)
+        #Rs_ba = results.get("Rs", None)
+        #ts_ba = results.get("ts", None)
+        #Ps_ba = results.get("Ps", None)
+        #Xs_ba = results.get("Xs", None)
 
         # Save NPZ
-        npz_path = os.path.join(out_dir, f"{scene_name}.npz")
-        np.savez(npz_path, Rs=Rs_ba, ts=ts_ba, Ps=Ps_ba, Xs=Xs_ba)
+        #npz_path = os.path.join(out_dir, f"{scene_name}.npz")
+        #np.savez(npz_path, Rs=Rs_ba, ts=ts_ba, Ps=Ps_ba, Xs=Xs_ba)
 
         # Plot point cloud
-        X_ref = results["Xs"]
-        X_ref = torch.as_tensor(X_ref, dtype=torch.double)
+        #X_ref = results["Xs"]
+        #X_ref = torch.as_tensor(X_ref, dtype=torch.double)
 
-        lower, upper = X_ref.quantile(0.01), X_ref.quantile(0.99)
-        mask = ((X_ref >= lower) & (X_ref <= upper)).all(axis=1)
-        X_ref = X_ref[mask]
+        #lower, upper = X_ref.quantile(0.01), X_ref.quantile(0.99)
+        #mask = ((X_ref >= lower) & (X_ref <= upper)).all(axis=1)
+        #X_ref = X_ref[mask]
 
-        plot_path = os.path.join(out_dir, f"{scene_name}.html")
-        plotly_3d_points(X_ref, save_path=plot_path)
+        #plot_path = os.path.join(out_dir, f"{scene_name}.html")
+        #plotly_3d_points(X_ref, save_path=plot_path)
     
     df = pd.DataFrame(repro_stats)
     excel_path = os.path.join(out_dir, "reprojection_stats.xlsx")
