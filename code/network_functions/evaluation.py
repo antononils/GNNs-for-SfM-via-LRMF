@@ -1,6 +1,8 @@
 import torch
 from utils.dataset_utils import denormalize_M
 
+from models.init_model import extract_view_outputs
+
 def init_cam_V(n_views, device):
     # quaternion = (w,x,y,z) with w ~ 1, small xyz noise
     eps = 1e-3
@@ -65,9 +67,14 @@ def evaluate_model(dataloader,Ns_list,Ms_gt,solver_type,model_path,model,scene_t
             else:
                 raise ValueError(f"Unknown scene type: {scene_type}")
             # Forward pass
-            P_seq, X_seq = model(V0, S0, edge_index, edge_attr, M, obs_matrix, solver_type, 0)
-            P_final = P_seq[-1]
-            X_final = X_seq[-1]
+            
+            #P_seq, X_seq = model(V0, S0, edge_index, edge_attr, M, obs_matrix, solver_type, 0)
+            #P_final = P_seq[-1]
+            #X_final = X_seq[-1]
+            
+            P_final = extract_view_outputs(V0)
+            X_final = S0
+            
             # Compute pixel error
             px_error = compute_pixel_error(P_final, X_final, Ms_gt[i], Ns, obs_matrix)
             
