@@ -5,7 +5,7 @@ from utils.plot_utils import plot_cameras
 import numpy as np
 
 if __name__ == '__main__':
-    scene = 'DrinkingFountainSomewhereInZurich'
+    scene = 'YuehHaiChingTempleSingapore'
     results_path = f'outputs/{scene}.npz'
     results = np.load(results_path)
     Xs = results['Xs']

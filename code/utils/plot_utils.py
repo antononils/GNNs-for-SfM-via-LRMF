@@ -38,22 +38,30 @@ def plot_cameras(Rs_pred, ts_pred, pts3D, Rs_gt, ts_gt, save_path):
     data = []
     data.append(get_3D_quiver_trace(ts_gt, Rs_gt[:, :3, 2], color='#86CE00', name='cam_gt'))
     data.append(get_3D_quiver_trace(ts_pred, Rs_pred[:, :3, 2], color='#C4451C', name='cam_learn'))
-    data.append(get_3D_scater_trace(ts_gt.T, color='#86CE00', name='Ground truth camera', size=2))
-    data.append(get_3D_scater_trace(ts_pred.T, color='#C4451C', name='Predicted camera', size=2))
+    data.append(get_3D_scater_trace(ts_gt.T, color='#86CE00', name='Ground truth cameras', size=2))
+    data.append(get_3D_scater_trace(ts_pred.T, color='#C4451C', name='Predicted cameras', size=2))
     data.append(get_3D_scater_trace(pts3D, '#3366CC', '3D points', size=0.5))
 
     fig = go.Figure(data=data)
-    fig.update_layout(
-    legend=dict(
-        font=dict(size=16),       # change the font size of legend text
-        itemsizing='constant',    # ensures marker size is consistent
-        traceorder='normal',      # order of legend items
-    )
-)
+    fig.update_layout(showlegend=False)
+
+    #fig.update_layout(
+    #legend=dict(
+    #    font=dict(family="Times New Roman, serif", size=38, color='black'),       # change the font size of legend text
+    #    itemsizing='constant',    # ensures marker size is consistent
+    #    traceorder='normal',      # order of legend items
+    #)
+#)
     camera = dict(
-    eye=dict(x=0.8532378372509384, y=-0.5567518310038587, z=-0.5177441886434777),
-    center=dict(x=-0.0050950933959899355, y=-0.000965791152714751, z=-0.09522949972226767),
-    up=dict(x=-0.28740543144175656, y=-0.820062341570065, z=0.49486955242407066)
+    eye=dict(x=0.42372829309514876,
+    y=-0.363861827371949,
+    z=-1.5813549717355537),
+    center=dict(x=0.10168853835847104,
+    y=-0.08282214300009132,
+    z=-0.2530434569050146),
+    up=dict(x=-0.007314272349394607,
+    y=-0.9786736093325967,
+    z=0.2052911781248936)
 )
     fig.update_layout(scene_camera=camera)
     
@@ -63,7 +71,10 @@ def plot_cameras(Rs_pred, ts_pred, pts3D, Rs_gt, ts_gt, save_path):
     yaxis=dict(showbackground=True, showgrid=True, showticklabels=False, title_text='', visible=False),
     zaxis=dict(showbackground=True, showgrid=True, showticklabels=False, title_text='', visible=False),
 )
-    pio.write_image(fig, "output2.svg", engine="kaleido", scale=3)
+    fig.update_layout(
+    margin=dict(l=0, r=0, t=0, b=0)  # left, right, top, bottom
+)
+    pio.write_image(fig, "yueh.svg", engine="kaleido", scale=3)
     plotly.offline.plot(fig, filename=save_path, auto_open=False)
 
     return save_path
