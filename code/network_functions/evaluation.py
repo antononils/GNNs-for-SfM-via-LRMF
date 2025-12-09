@@ -73,6 +73,7 @@ def evaluate_model(dataloader,Ns_list,Ms_gt,solver_type,model_path,model,scene_t
 #            X_final = X_seq[-1]
 
 #            P_final = extract_view_outputs(V0)
+            V0, S0 = torch.empty(m, 12).uniform_(0,1).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
             P_final = V0.view(-1, 3, 4)
             X_final = S0
 
