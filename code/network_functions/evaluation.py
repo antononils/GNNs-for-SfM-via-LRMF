@@ -66,21 +66,17 @@ def evaluate_model(dataloader,Ns_list,Ms_gt,solver_type,model_path,model,scene_t
                 V0, S0 = init_cam_V(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
             else:
                 raise ValueError(f"Unknown scene type: {scene_type}")
+
             # Forward pass
-            
-            #P_seq, X_seq = model(V0, S0, edge_index, edge_attr, M, obs_matrix, solver_type, 0)
-            #P_final = P_seq[-1]
-            #X_final = X_seq[-1]
-            
+#            P_seq, X_seq = model(V0, S0, edge_index, edge_attr, M, obs_matrix, solver_type, 0)
+#            P_final = P_seq[-1]
+#            X_final = X_seq[-1]
+
             P_final = extract_view_outputs(V0)
             X_final = S0
-            
-            # Compute pixel error
-            px_error = compute_pixel_error(P_final, X_final, Ms_gt[i], Ns, obs_matrix)
-            
-            
-            px_errors.append(px_error.item())
+
             P_finals.append(P_final)
             X_finals.append(X_final)
             obs_matrices.append(obs_matrix)
-    return px_errors, P_finals, X_finals, obs_matrices
+
+    return P_finals, X_finals, obs_matrices

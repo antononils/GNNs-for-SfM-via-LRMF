@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     dataloader, Ns, Ms = create_dataloader(scene_names, scene_type=scene_type, max_points=None, batch_size=1, shuffle=False, outlier_threshold=None, device=device)
     model = InitModel(dV=1024, dS=64, n_factormers=2, scene_type=scene_type, solver_iters=0, device=device).to(device)
-    _, Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/proj_model.pth', model, scene_type=scene_type, device=device)
+    Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/best_euc_model.pth', model, scene_type=scene_type, device=device)
 
     out_dir = "outputs_proj"
     os.makedirs(out_dir, exist_ok=True)
