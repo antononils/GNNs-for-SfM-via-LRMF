@@ -3,7 +3,22 @@ from network_functions.ba_solver import admm_ba, ceres_ba
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+def rotation_6d_to_matrix(d6: torch.Tensor) -> torch.Tensor:
+    """Convert 6D rotation representation to a rotation matrix.
 
+    Follows the representation from:
+    Zhou et al., "On the Continuity of Rotation Representations in Neural Networks".
+    d6: (..., 6)
+    returns: (..., 3, 3)
+    """
+    a1 = d6[..., 0:3]
+    a2 = d6[..., 3:6]
+    b1 = F.normalize(a1, dim=-1)
+    # make a2 orthogonal to b1
+    b2 = a2 - (b1 * a2).sum(dim=-1, keepdim=True) * b1
+    b2 = F.normalize(b2, dim=-1)
+    b3 = torch.cross(b1, b2, dim=-1)
+    return torch.stack((b1, b2, b3), dim=-2)
 
 def project_to_rot(m):
     u, s, v = torch.svd(m)
@@ -57,7 +72,8 @@ def quaternion_to_matrix(q: torch.Tensor) -> torch.Tensor:
 
 def extract_view_outputs(x):
     # Get calibrated predictions
-    RTs = quaternion_to_matrix(x[:, :4])
+    #RTs = quaternion_to_matrix(x[:, :4])
+    RTs = rotation_6d_to_matrix(x[:, :6])
 
     # Get translation
     minRTts = x[:, -3:]
@@ -91,8 +107,8 @@ class InitModel(nn.Module):
         if scene_type == 'Euclidean':
             self.scene_scale = nn.Parameter(torch.tensor(0.1))  # or 0.01
             # Input embedding/extraction layers
-            self.embed_V = nn.Linear(7, dV)
-            self.extract_V = nn.Linear(dV, 7)
+            self.embed_V = nn.Linear(9, dV)
+            self.extract_V = nn.Linear(dV, 9)
         elif scene_type == 'Projective':
             # Input embedding/extraction layers
             self.embed_V = nn.Linear(12, dV)

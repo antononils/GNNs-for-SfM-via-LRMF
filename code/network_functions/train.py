@@ -12,6 +12,28 @@ def init_cam_V(n_views, device):
     V0 = torch.cat([q, t], dim=-1)
     return V0
 
+def init_cam_V_6d(n_views, device):
+    """
+    Initialize camera V0 with 6D rotation representation + translation.
+
+    Each camera has:
+      - 6D rotation vector (as in Zhou et al. 2019)
+      - 3D translation
+    Returns: V0 (n_views, 9)
+    """
+    eps = 1e-3
+
+    # Random 6D rotation vectors with small noise around identity
+    # Identity rotation corresponds to b1=[1,0,0], b2=[0,1,0] in 6D space
+    rot6d = torch.zeros(n_views, 6, device=device)
+    rot6d += torch.randn_like(rot6d) * 1e-2  # small noise
+
+    # Small translations, scale tuned to your scene
+    t = torch.randn(n_views, 3, device=device) * 0.1
+
+    # Concatenate to form V0 (n_views, 9)
+    V0 = torch.cat([rot6d, t], dim=-1)
+    return V0
 # -------------------------------
 # Training loop with warm-up and gradient clipping
 # -------------------------------
@@ -38,7 +60,7 @@ def train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, l
             m, n = data.m, data.n
             edge_index, edge_attr = data.edge_index.to(device), data.edge_attr.to(device)
             if scene_type == 'Euclidean':
-                V0, S0 = init_cam_V(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
+                V0, S0 = init_cam_V_6d(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
             elif scene_type == 'Projective':
                 V0, S0 = torch.empty(m, 12).uniform_(0.1).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
             else:
@@ -74,7 +96,7 @@ def train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, l
                 m, n = data.m, data.n
                 edge_index, edge_attr = data.edge_index.to(device), data.edge_attr.to(device)
                 if scene_type == 'Euclidean':
-                    V0, S0 = init_cam_V(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
+                    V0, S0 = init_cam_V_6d(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
                 elif scene_type == 'Projective':
                     V0, S0 = torch.empty(m, 12).uniform_(0.1).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
                 else:
