@@ -1,6 +1,7 @@
 import torch
 from utils.dataset_utils import denormalize_M
 
+
 def init_cam_V(n_views, device):
     # quaternion = (w,x,y,z) with w ~ 1, small xyz noise
     eps = 1e-3
@@ -46,8 +47,8 @@ def evaluate_model(dataloader,Ns_list,Ms_gt,solver_type,model_path,model,scene_t
     P_finals = []
     X_finals = []
     obs_matrices = []
-    torch.manual_seed(0)
-    torch.cuda.manual_seed_all(0)
+    torch.manual_seed(2)
+    torch.cuda.manual_seed_all(2)
     with torch.no_grad():
         for i, data in enumerate(dataloader):
             # Extract data
@@ -64,16 +65,14 @@ def evaluate_model(dataloader,Ns_list,Ms_gt,solver_type,model_path,model,scene_t
                 V0, S0 = init_cam_V(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
             else:
                 raise ValueError(f"Unknown scene type: {scene_type}")
+
             # Forward pass
             P_seq, X_seq = model(V0, S0, edge_index, edge_attr, M, obs_matrix, solver_type, 0)
             P_final = P_seq[-1]
             X_final = X_seq[-1]
-            # Compute pixel error
-            px_error = compute_pixel_error(P_final, X_final, Ms_gt[i], Ns, obs_matrix)
-            
-            
-            px_errors.append(px_error.item())
+
             P_finals.append(P_final)
             X_finals.append(X_final)
             obs_matrices.append(obs_matrix)
-    return px_errors, P_finals, X_finals, obs_matrices
+
+    return P_finals, X_finals, obs_matrices
