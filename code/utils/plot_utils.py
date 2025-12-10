@@ -45,23 +45,23 @@ def plot_cameras(Rs_pred, ts_pred, pts3D, Rs_gt, ts_gt, save_path):
     fig = go.Figure(data=data)
     fig.update_layout(showlegend=False)
 
-    #fig.update_layout(
-    #legend=dict(
-    #    font=dict(family="Times New Roman, serif", size=38, color='black'),       # change the font size of legend text
-    #    itemsizing='constant',    # ensures marker size is consistent
-    #    traceorder='normal',      # order of legend items
-    #)
+#    fig.update_layout(
+#    legend=dict(
+#        font=dict(family="Times New Roman, serif", size=36, color='black'),       # change the font size of legend text
+#        itemsizing='constant',    # ensures marker size is consistent
+#        traceorder='normal',      # order of legend items
+#    )
 #)
     camera = dict(
-    eye=dict(x=0.42372829309514876,
-    y=-0.363861827371949,
-    z=-1.5813549717355537),
+    eye=dict(x=0.9104545337633853,
+    y=-0.12304212137538591,
+    z=-0.8233359183301237),
     center=dict(x=0.10168853835847104,
-    y=-0.08282214300009132,
-    z=-0.2530434569050146),
-    up=dict(x=-0.007314272349394607,
-    y=-0.9786736093325967,
-    z=0.2052911781248936)
+    y=-0.08282214300009134,
+    z=-0.2530434569050153),
+    up=dict(x=0.030951651504453302,
+    y=-0.993006935122771,
+    z=0.11392638880974004)
 )
     fig.update_layout(scene_camera=camera)
     
@@ -74,7 +74,7 @@ def plot_cameras(Rs_pred, ts_pred, pts3D, Rs_gt, ts_gt, save_path):
     fig.update_layout(
     margin=dict(l=0, r=0, t=0, b=0)  # left, right, top, bottom
 )
-    pio.write_image(fig, "yueh.svg", engine="kaleido", scale=3)
+    pio.write_image(fig, "sri.svg", engine="kaleido", scale=6)
     plotly.offline.plot(fig, filename=save_path, auto_open=False)
 
     return save_path

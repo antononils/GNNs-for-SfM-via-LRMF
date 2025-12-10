@@ -11,7 +11,7 @@ if __name__ == '__main__':
     print(device)
     # Hyperparameters you can tweak
     epochs = 1000
-    warmup_epochs = 1000          # train GNN alone for these many epochs
+    warmup_epochs = 10          # train GNN alone for these many epochs
     solver_iters_schedule = [1,2,3]  # after warmup, ramp to these many ALS iters (index 0 = first epoch after warmup)
     model_solver_default = 3       # default internal value (unused because we use override scheduling)
     lr = 3e-5                   # small lr stabilizes training
@@ -21,6 +21,8 @@ if __name__ == '__main__':
     training_scenes = ["EcoleSuperiorDeGuerre", "DoorLund", "ParkGateClermontFerrand", "ThianHookKengTempleSingapore", "StatueOfLiberty", "KingsCollegeUniversityOfToronto", "SriThendayuthapaniSingapore", "SkansenKronanGothenburg", "BuddahToothRelicTempleSingapore", "Eglisedudome", "FortChanningGateSingapore", "GustavVasa"]
     validation_scenes = ["GoldenStatueSomewhereInHongKong", "EastIndiamanGoteborg", "PantheonParis"]
     scene_type = 'Euclidean'
+    training_scenes = ['DrinkingFountainSomewhereInZurich', 'dtu500', 'NijoCastleGate']
+    validation_scenes = ['GustavVasa', 'DoorLund']
     train_dataloader, train_Ns_list, train_M_gt_list = create_dataloader(training_scenes, scene_type, max_points=None,batch_size=1, shuffle=False, outlier_threshold=None, device=device)
     val_dataloader, val_Ns_list, val_M_gt_list = create_dataloader(validation_scenes, scene_type, max_points=None, batch_size=1, shuffle=False, outlier_threshold=None, device=device)
 
