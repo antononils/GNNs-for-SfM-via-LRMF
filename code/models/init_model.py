@@ -72,8 +72,8 @@ def quaternion_to_matrix(q: torch.Tensor) -> torch.Tensor:
 
 def extract_view_outputs(x):
     # Get calibrated predictions
-    #RTs = quaternion_to_matrix(x[:, :4])
-    RTs = rotation_6d_to_matrix(x[:, :6])
+    RTs = quaternion_to_matrix(x[:, :4])
+    #RTs = rotation_6d_to_matrix(x[:, :6])
 
     # Get translation
     minRTts = x[:, -3:]
@@ -107,8 +107,8 @@ class InitModel(nn.Module):
         if scene_type == 'Euclidean':
             self.scene_scale = nn.Parameter(torch.tensor(0.1))  # or 0.01
             # Input embedding/extraction layers
-            self.embed_V = nn.Linear(9, dV)
-            self.extract_V = nn.Linear(dV, 9)
+            self.embed_V = nn.Linear(7, dV)
+            self.extract_V = nn.Linear(dV, 7)
         elif scene_type == 'Projective':
             # Input embedding/extraction layers
             self.embed_V = nn.Linear(12, dV)

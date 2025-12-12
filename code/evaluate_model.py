@@ -1,4 +1,4 @@
-import torch, os, numpy as np, pandas as pd
+import torch, os, time, numpy as np, pandas as pd
 from utils.dataset_utils import *
 from utils.geo_utils import *
 from utils.ba_functions import *
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     model = InitModel(dV=1024, dS=64, n_factormers=2, scene_type=scene_type, solver_iters=0, device=device).to(device)
     Ps, Xs, Os = evaluate_model(dataloader, Ns, Ms, 'ceres', '../../pretrained_models/best_euc_model.pth', model, scene_type=scene_type, device=device)
 
-    out_dir = "outputs_seed2"
+    out_dir = "outputs_time"
     os.makedirs(out_dir, exist_ok=True)
     repro_stats = []
 
@@ -40,13 +40,15 @@ if __name__ == '__main__':
             M = denormalize_M(M, N, O)
             P, X, M, N, O = P.cpu().numpy(), X.cpu().numpy(), M.cpu().numpy(), N.cpu().numpy(), O.cpu().numpy()
             results = proj_ba(P, M, X, N)
-        
+
         elif scene_type == 'Euclidean':
             M = denormalize_M(M, N, O)
             P, X, M, N, O = P.cpu().numpy(), X.cpu().numpy(), M.cpu().numpy(), N.cpu().numpy(), O.cpu().numpy()
             R, t = decompose_camera_matrix(P, inverse_direction_camera2global=True)
+            start = time.time()
             results = euc_ba(M, R, t, np.linalg.inv(N), X, None, N)
-        
+            print(f'BA: {time.time()-start}')
+
         else:
             raise ValueError(f"Unknown scene type: {scene_type}")
 
@@ -60,14 +62,14 @@ if __name__ == '__main__':
         })
 
         # Extract BA results
-        #Rs_ba = results.get("Rs", None)
-        #ts_ba = results.get("ts", None)
-        #Ps_ba = results.get("Ps", None)
-        #Xs_ba = results.get("Xs", None)
+        Rs_ba = results.get("Rs", None)
+        ts_ba = results.get("ts", None)
+        Ps_ba = results.get("Ps", None)
+        Xs_ba = results.get("Xs", None)
 
         # Save NPZ
-        #npz_path = os.path.join(out_dir, f"{scene_name}.npz")
-        #np.savez(npz_path, Rs=Rs_ba, ts=ts_ba, Ps=Ps_ba, Xs=Xs_ba)
+        npz_path = os.path.join(out_dir, f"{scene_name}.npz")
+        np.savez(npz_path, Rs=Rs_ba, ts=ts_ba, Ps=Ps_ba, Xs=Xs_ba)
 
         # Plot point cloud
         #X_ref = results["Xs"]

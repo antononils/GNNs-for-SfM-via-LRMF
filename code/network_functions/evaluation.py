@@ -1,8 +1,8 @@
-import torch
+import torch, time
 from utils.dataset_utils import denormalize_M
 
 
-def init_cam_V(n_views, device):
+def init_cam_V_quat(n_views, device):
     # quaternion = (w,x,y,z) with w ~ 1, small xyz noise
     eps = 1e-3
     q = torch.randn(n_views, 4, device=device) * 1e-3
@@ -10,6 +10,13 @@ def init_cam_V(n_views, device):
     q = q / q.norm(dim=-1, keepdim=True).clamp(min=1e-8)
     t = torch.randn(n_views, 3, device=device) * 0.1  # small translation scale tuned to your scene
     V0 = torch.cat([q, t], dim=-1)
+    return V0
+
+def init_cam_V_6d(n_views, device):
+    rot6d = torch.zeros(n_views, 6, device=device)
+    rot6d += torch.randn_like(rot6d) * 1e-2
+    t = torch.randn(n_views, 3, device=device) * 0.1
+    V0 = torch.cat([rot6d, t], dim=-1)
     return V0
 
 def compute_pixel_error(P_final, X_final, M, Ns, obs_matrix):
@@ -47,8 +54,8 @@ def evaluate_model(dataloader,Ns_list,Ms_gt,solver_type,model_path,model,scene_t
     P_finals = []
     X_finals = []
     obs_matrices = []
-    torch.manual_seed(2)
-    torch.cuda.manual_seed_all(2)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed_all(0)
     with torch.no_grad():
         for i, data in enumerate(dataloader):
             # Extract data
@@ -62,12 +69,15 @@ def evaluate_model(dataloader,Ns_list,Ms_gt,solver_type,model_path,model,scene_t
             if scene_type == 'Projective':
                 V0, S0 = torch.empty(m, 12).uniform_(0,1).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
             elif scene_type == 'Euclidean':
-                V0, S0 = init_cam_V(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
+                V0, S0 = init_cam_V_quat(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
             else:
                 raise ValueError(f"Unknown scene type: {scene_type}")
 
             # Forward pass
+            start = time.time()
             P_seq, X_seq = model(V0, S0, edge_index, edge_attr, M, obs_matrix, solver_type, 0)
+            print(f'Inference: {time.time()-start}')
+
             P_final = P_seq[-1]
             X_final = X_seq[-1]
 

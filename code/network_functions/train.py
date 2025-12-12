@@ -2,7 +2,7 @@ import torch
 from utils.dataset_utils import denormalize_M
 
 
-def init_cam_V(n_views, device):
+def init_cam_V_quat(n_views, device):
     # quaternion = (w,x,y,z) with w ~ 1, small xyz noise
     eps = 1e-3
     q = torch.randn(n_views, 4, device=device) * 1e-2
@@ -60,7 +60,7 @@ def train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, l
             m, n = data.m, data.n
             edge_index, edge_attr = data.edge_index.to(device), data.edge_attr.to(device)
             if scene_type == 'Euclidean':
-                V0, S0 = init_cam_V_6d(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
+                V0, S0 = init_cam_V_quat(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
             elif scene_type == 'Projective':
                 V0, S0 = torch.empty(m, 12).uniform_(0.1).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
             else:
@@ -96,7 +96,7 @@ def train_model(model, train_dataloader, val_dataloader, optimizer, scheduler, l
                 m, n = data.m, data.n
                 edge_index, edge_attr = data.edge_index.to(device), data.edge_attr.to(device)
                 if scene_type == 'Euclidean':
-                    V0, S0 = init_cam_V_6d(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
+                    V0, S0 = init_cam_V_quat(m,device), torch.empty(n, 3).uniform_(0,1).to(device)
                 elif scene_type == 'Projective':
                     V0, S0 = torch.empty(m, 12).uniform_(0.1).to(device), torch.empty(n, 3).uniform_(0,1).to(device)
                 else:
